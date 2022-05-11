@@ -1,12 +1,12 @@
 #index:
 #    path: /
 #    controller: App\Controller\DefaultController::index
-api_login_check:
-  path: /api/v1/auth
+#api_login_check:
+  #path: /api/v1/auth
 
-api_register:
-  path: /api/v1/register
-  controller: App\Controller\ApiController::register
+#api_register:
+  #path: /api/v1/register
+  #controller: App\Controller\ApiController::register
   #Controller: App\Controller\ApiController::auth
 #api_register:
 #    path: /api/v1/register

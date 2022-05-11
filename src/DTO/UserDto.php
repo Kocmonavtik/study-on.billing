@@ -2,13 +2,17 @@
 
 namespace App\DTO;
 
+use JMS\Serializer\Annotation as Serializer;
 use Symfony\Component\Validator\Constraints as Assert;
 
 class UserDto
 {
     /**
+     * @var string
+     *
      * @Assert\NotBlank(message="Name is mandatory")
      * @Assert\Email( message="Invalid email address" )
+     * @Serializer\Type("string")
      */
     public $username;
 
@@ -17,6 +21,7 @@ class UserDto
      *
      * @Assert\NotBlank()
      * @Assert\Length(min=6)
+     * @Serializer\Type("string")
      */
     public $password;
 
