@@ -78,5 +78,9 @@
             "allow-contrib": false,
             "require": "5.4.*"
         }
+    },
+    "require-dev": {
+        "symfony/browser-kit": "5.4.*",
+        "symfony/dom-crawler": "5.4.*"
     }
 }

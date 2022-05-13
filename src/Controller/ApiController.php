@@ -197,13 +197,8 @@ class ApiController extends AbstractController
         } catch (\Exception $exception) {
             throw new \HttpException(500, 'Error occurred while trying register.', $exception);
         }
-
-        //$request->headers->get('Authorization');
-
         $token = $JWTTokenManager->create($user);
-        //return new JsonResponse(['token' => $token]);
         return $this->json(['token' => $token, 'username' => $user->getEmail()], Response::HTTP_CREATED);
-        //return new JsonResponse(['token' => $JWTTokenManager->create($user)]);
     }
 
     /**
@@ -272,13 +267,5 @@ class ApiController extends AbstractController
         }
         $user = $usersRepository->find($currentUser->getUserIdentifier());
         return $this->json(['username' => $user->getEmail(),'roles' => $user->getRoles(), 'balance' => $user->getBalance()]);
-
-        /*$token=
-        $token = $tokenStorage->getToken();
-        $user = $token->getUser();
-        return new JsonResponse($user);*/
-      /*  $authSuccess=$this->container->get('lexik_jwt_authentication.handler.authentication_success');
-        return $authSuccess->handleAuthenticationSuccess(UserDto::class);*/
-        //return new JsonResponse($tokenStorage->getToken()->getUser());
     }
 }
