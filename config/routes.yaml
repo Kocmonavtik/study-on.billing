@@ -10,3 +10,7 @@
   #Controller: App\Controller\ApiController::auth
 #api_register:
 #    path: /api/v1/register
+app.swagger_ui:
+  path: /api/v1/doc
+  methods: GET
+  defaults: { _controller: nelmio_api_doc.controller.swagger_ui }

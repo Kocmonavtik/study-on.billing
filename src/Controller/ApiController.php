@@ -19,6 +19,10 @@ use Symfony\Component\Routing\Annotation\Route;
 use Symfony\Component\Security\Core\Authentication\Token\Storage\TokenStorageInterface;
 use Symfony\Component\Security\Core\Security;
 use Symfony\Component\Validator\Validator\ValidatorInterface;
+use Symfony\Component\Validator\ConstraintViolation;
+use OpenApi\Annotations as OA;
+use Nelmio\ApiDocBundle\Annotation\Security as NelmioSecurity;
+use Nelmio\ApiDocBundle\Annotation\Model;
 
 /**
  * @Route("/api", name="app_api")
@@ -26,12 +30,150 @@ use Symfony\Component\Validator\Validator\ValidatorInterface;
 class ApiController extends AbstractController
 {
     /**
+     * @OA\Post (
+     *     path="api/v1/auth",
+     *     description="Аутентификация пользователя",
+     * )
+     * @OA\RequestBody(
+     *      required=true,
+     *      @OA\JsonContent(
+     *          @OA\Property(
+     *              property="username",
+     *              type="string",
+     *              example="example@example.com"
+     *          ),
+     *          @OA\Property(
+     *              property="password",
+     *              type="string",
+     *              example="yourPassword"
+     *          )
+     *       )
+     * )
+     * @OA\Response(
+     *     response=200,
+     *     description="Возвращает токен",
+     *     @OA\JsonContent(
+     *        @OA\Property(
+     *          property="token",
+     *          type="string"
+     *        )
+     *     )
+     * )
+     * @OA\Response(
+     *     response=401,
+     *     description="Ошибка авторизации",
+     *     @OA\JsonContent(
+     *        @OA\Property(
+     *          property="code",
+     *          type="string"
+     *        ),
+     *        @OA\Property(
+     *          property="message",
+     *          type="string"
+     *        ),
+     *     )
+     * )
+     * @OA\Response(
+     *     response="default",
+     *     description="Непредвиденная ошибка",
+     *     @OA\JsonContent(
+     *        @OA\Property(
+     *          property="code",
+     *          type="string"
+     *        ),
+     *        @OA\Property(
+     *          property="message",
+     *          type="string"
+     *        ),
+     *     )
+     * )
      * @Route ("/v1/auth", name="api_auth", methods={"POST"})
      */
     public function auth(): Response
     {
     }
+
     /**
+     * /**
+     * @OA\Post(
+     *     path="api/v1/register",
+     *     description="Регистрация нового пользователя",
+     * )
+     * @OA\RequestBody(
+     *      required=true,
+     *      @OA\JsonContent(
+     *          @OA\Property(
+     *              property="username",
+     *              type="string",
+     *              example="example@example.com"
+     *          ),
+     *          @OA\Property(
+     *              property="password",
+     *              type="string",
+     *              example="yourPassword"
+     *          )
+     *       )
+     * )
+     * @OA\Response(
+     *     response=201,
+     *     description="Пользователь успешно создан",
+     *     @OA\JsonContent(
+     *        @OA\Property(
+     *          property="token",
+     *          type="string"
+     *        ),
+     *        @OA\Property(
+     *          property="roles",
+     *          type="array",
+     *          @OA\Items(type="string")
+     *        )
+     *
+     *     )
+     * )
+     * @OA\Response(
+     *     response=400,
+     *     description="Ошибка валидации",
+     *     @OA\JsonContent(
+     *        @OA\Property(
+     *          property="errors",
+     *          type="array",
+     *          @OA\Items(
+     *              @OA\Property(
+     *                  type="string",
+     *                  property="property_name"
+     *              )
+     *          )
+     *        )
+     *     )
+     * )
+     * @OA\Response(
+     *     response=401,
+     *     description="Ошибка аутетнтификации пользователя",
+     *     @OA\JsonContent(
+     *        @OA\Property(
+     *          property="code",
+     *          type="string"
+     *        ),
+     *        @OA\Property(
+     *          property="message",
+     *          type="string"
+     *        ),
+     *     )
+     * )
+     * @OA\Response(
+     *     response="default",
+     *     description="Непредвиденная ошибка",
+     *     @OA\JsonContent(
+     *        @OA\Property(
+     *          property="code",
+     *          type="string"
+     *        ),
+     *        @OA\Property(
+     *          property="message",
+     *          type="string"
+     *        ),
+     *     )
+     * )
      * @Route ("/v1/register", name="api_register", methods={"POST"})
      */
     public function register(
@@ -65,6 +207,59 @@ class ApiController extends AbstractController
     }
 
     /**
+     * @OA\Get(
+     *     path="api/v1/current",
+     *     description="Получение текущего пользователя",
+     * )
+     * @OA\Response(
+     *     response=200,
+     *     description="Возвращение информации о текущем пользователе",
+     *     @OA\JsonContent(
+     *        @OA\Property(
+     *          property="username",
+     *          type="string",
+     *        ),
+     *        @OA\Property(
+     *          property="roles",
+     *          type="array",
+     *          @OA\Items(type="string")
+     *        ),
+     *        @OA\Property(
+     *          property="balance",
+     *          type="float",
+     *        )
+     *     )
+     * )
+     * @OA\Response(
+     *     response=401,
+     *     description="Пользователь не был авторизирован",
+     *     @OA\JsonContent(
+     *        @OA\Property(
+     *          property="code",
+     *          type="string"
+     *        ),
+     *        @OA\Property(
+     *          property="message",
+     *          type="string"
+     *        ),
+     *     )
+     * )
+     * @OA\Response(
+     *     response="default",
+     *     description="Непредвиденная ошибка",
+     *     @OA\JsonContent(
+     *        @OA\Property(
+     *          property="code",
+     *          type="string"
+     *        ),
+     *        @OA\Property(
+     *          property="message",
+     *          type="string"
+     *        ),
+     *     )
+     * )
+     * @NelmioSecurity(name="Bearer")
+     *
      * @Route ("/v1/current", name="api_current", methods={"GET"})
      */
     public function current(Security $security, UsersRepository $usersRepository): Response
@@ -72,8 +267,8 @@ class ApiController extends AbstractController
         $currentUser = $security->getUser();
 
         if (!$currentUser) {
-            return $this->json(['status_code' => Response::HTTP_NOT_FOUND,
-                'message' => 'Пользователя не существует'], Response::HTTP_NOT_FOUND);
+            return $this->json(['status_code' => Response::HTTP_UNAUTHORIZED,
+                'message' => 'Пользователь не авторизирован'], Response::HTTP_UNAUTHORIZED);
         }
         $user = $usersRepository->find($currentUser->getUserIdentifier());
         return $this->json(['username' => $user->getEmail(),'roles' => $user->getRoles(), 'balance' => $user->getBalance()]);
