@@ -37,6 +37,11 @@ class Users implements UserInterface, PasswordAuthenticatedUserInterface
      */
     private $password;
 
+    /**
+     * @ORM\Column(type="float")
+     */
+    private $balance;
+
     public function getId(): ?int
     {
         return $this->id;
@@ -105,6 +110,16 @@ class Users implements UserInterface, PasswordAuthenticatedUserInterface
 
         return $this;
     }
+    public function getBalance(): float
+    {
+        return $this->balance;
+    }
+    public function setBalace(float $balance): self
+    {
+        $this->balance = $balance;
+
+        return $this;
+    }
 
     /**
      * Returning a salt is only needed, if you are not using a modern
@@ -133,6 +148,7 @@ class Users implements UserInterface, PasswordAuthenticatedUserInterface
         $user->setEmail($dto->getUsername());
         $user->setRoles(['ROLE_USER']);
         $user->setPassword($passwordHasher->hashPassword($user, $dto->getPassword()));
+        $user->setBalace(0);
         return $user;
     }
 }

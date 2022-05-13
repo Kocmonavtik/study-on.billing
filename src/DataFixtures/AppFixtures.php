@@ -26,6 +26,7 @@ class AppFixtures extends Fixture
             $user1,
             '12345'
         ));
+        $user1->setBalace(0);
         $manager->persist($user1);
 
         $user2 = new Users();
@@ -35,6 +36,7 @@ class AppFixtures extends Fixture
             $user2,
             '12345'
         ));
+        $user2->setBalace(0);
         $manager->persist($user2);
         $manager->flush();
     }
