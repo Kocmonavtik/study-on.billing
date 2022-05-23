@@ -10,7 +10,7 @@ class UserDto
     /**
      * @var string
      *
-     * @Assert\NotBlank(message="Name is mandatory")
+     * @Assert\NotBlank(message="Поле пользователя не должно быть пустым")
      * @Assert\Email( message="Invalid email address" )
      * @Serializer\Type("string")
      */
@@ -19,8 +19,8 @@ class UserDto
     /**
      * @var string
      *
-     * @Assert\NotBlank()
-     * @Assert\Length(min=6)
+     * @Assert\NotBlank(message="Поле пароля не должно быть пустым")
+     * @Assert\Length(min=6, minMessage="Пароль должен состоять минимум из 6 символов")
      * @Serializer\Type("string")
      */
     public $password;
@@ -63,4 +63,6 @@ class UserDto
 
         return $this;
     }
+
+
 }

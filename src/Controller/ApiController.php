@@ -2,10 +2,12 @@
 
 namespace App\Controller;
 
+use App\DTO\Transfromer\CurrentUserTransformer;
 use App\DTO\UserDto;
 use App\Entity\Users;
 use App\Repository\UsersRepository;
 use Doctrine\ORM\EntityManagerInterface;
+use http\Message;
 use JMS\Serializer\SerializerBuilder;
 use Lexik\Bundle\JWTAuthenticationBundle\Services\JWTTokenManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
@@ -94,7 +96,7 @@ class ApiController extends AbstractController
     }
 
     /**
-     * /**
+     *
      * @OA\Post(
      *     path="api/v1/register",
      *     description="Регистрация нового пользователя",
@@ -181,24 +183,32 @@ class ApiController extends AbstractController
         Request $request,
         ValidatorInterface $validator,
         EntityManagerInterface $entityManager,
-        UserPasswordHasherInterface $passwordHasher
+        UserPasswordHasherInterface $passwordHasher,
+        UsersRepository $usersRepository
     ): Response {
         $serializer = SerializerBuilder::create()->build();
         $userDto = $serializer->deserialize($request->getContent(), UserDto::class, 'json');
         $errors = $validator->validate($userDto);
 
+        $jsonErrors = [];
         if (\count($errors) > 0) {
-            throw new UnprocessableEntityHttpException($errors);
+            foreach ($errors as $error) {
+                $jsonErrors[$error->getPropertyPath()][] = $error->getMessage();
+            }
+            return $this->json(['errors' => $jsonErrors], Response::HTTP_BAD_REQUEST);
+        }
+        if ($usersRepository->findOneBy(['email' => $userDto->username])) {
+            return $this->json(['error' => 'Пользователь '.$userDto->username.' уже существует'], Response::HTTP_BAD_REQUEST);
         }
         try {
             $user = Users::fromDto($userDto, $passwordHasher);
             $entityManager->persist($user);
             $entityManager->flush();
         } catch (\Exception $exception) {
-            throw new \HttpException(500, 'Error occurred while trying register.', $exception);
+            return $this->json(['trow' => 500, 'code' => 'Error occurred while trying register.', $exception]);
         }
         $token = $JWTTokenManager->create($user);
-        return $this->json(['token' => $token, 'username' => $user->getEmail()], Response::HTTP_CREATED);
+        return $this->json(['token' => $token, 'roles' => $user->getRoles()], Response::HTTP_CREATED);
     }
 
     /**
@@ -257,15 +267,22 @@ class ApiController extends AbstractController
      *
      * @Route ("/v1/current", name="api_current", methods={"GET"})
      */
-    public function current(Security $security, UsersRepository $usersRepository): Response
+    public function current(Security $security): Response
     {
-        $currentUser = $security->getUser();
-
-        if (!$currentUser) {
-            return $this->json(['status_code' => Response::HTTP_UNAUTHORIZED,
-                'message' => 'Пользователь не авторизирован'], Response::HTTP_UNAUTHORIZED);
+        $user = $security->getUser();
+        if (!$user) {
+            return $this->json([
+                'status_code' => Response::HTTP_UNAUTHORIZED,
+                'message' => 'Пользователь не авторизован'
+            ], Response::HTTP_UNAUTHORIZED);
         }
-        $user = $usersRepository->find($currentUser->getUserIdentifier());
-        return $this->json(['username' => $user->getEmail(),'roles' => $user->getRoles(), 'balance' => $user->getBalance()]);
+
+        return $this->json(
+            ['uername' => $user->getEmail(),
+            'roles' => $user->getRoles(),
+            'balance' => $user->getBalance(),
+            ],
+            Response::HTTP_OK
+        );
     }
 }
