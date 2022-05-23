@@ -278,7 +278,7 @@ class ApiController extends AbstractController
         }
 
         return $this->json(
-            ['uername' => $user->getEmail(),
+            ['username' => $user->getEmail(),
             'roles' => $user->getRoles(),
             'balance' => $user->getBalance(),
             ],
