@@ -19,9 +19,7 @@ services:
             - '../src/DependencyInjection/'
             - '../src/Entity/'
             - '../src/Kernel.php'
-
     App\Events\EventApiException:
-        class: App\Events\EventApiException
         tags:
             - {name: kernel.event_listener, event: kernel.exception}
 
