@@ -91,7 +91,7 @@ class ApiController extends AbstractController
      * )
      * @Route ("/v1/auth", name="api_auth", methods={"POST"})
      */
-    public function auth(): Response
+    public function login(): Response
     {
     }
 
