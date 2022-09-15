@@ -4,7 +4,7 @@
     "minimum-stability": "stable",
     "prefer-stable": true,
     "require": {
-        "php": ">=7.2.5",
+        "php": ">=7.4",
         "ext-ctype": "*",
         "ext-iconv": "*",
         "ext-json": "*",
@@ -12,6 +12,7 @@
         "doctrine/doctrine-fixtures-bundle": "^3.4",
         "doctrine/doctrine-migrations-bundle": "^3.2",
         "doctrine/orm": "^2.12",
+        "gesdinet/jwt-refresh-token-bundle": "^1.1",
         "jms/serializer-bundle": "^4.0",
         "lcobucci/jwt": "^4.1",
         "lexik/jwt-authentication-bundle": "^2.15",

@@ -7,6 +7,9 @@ use App\DTO\UserDto;
 use App\Entity\Users;
 use App\Repository\UsersRepository;
 use Doctrine\ORM\EntityManagerInterface;
+use Gesdinet\JWTRefreshTokenBundle\Generator\RefreshTokenGeneratorInterface;
+use Gesdinet\JWTRefreshTokenBundle\Model\RefreshTokenInterface;
+use Gesdinet\JWTRefreshTokenBundle\Model\RefreshTokenManagerInterface;
 use http\Message;
 use JMS\Serializer\SerializerBuilder;
 use Lexik\Bundle\JWTAuthenticationBundle\Services\JWTTokenManagerInterface;
@@ -125,6 +128,10 @@ class ApiController extends AbstractController
      *          type="string"
      *        ),
      *        @OA\Property(
+     *          property = "refresh_token",
+     *          type="string"
+     *        ),
+     *        @OA\Property(
      *          property="roles",
      *          type="array",
      *          @OA\Items(type="string")
@@ -184,7 +191,9 @@ class ApiController extends AbstractController
         ValidatorInterface $validator,
         EntityManagerInterface $entityManager,
         UserPasswordHasherInterface $passwordHasher,
-        UsersRepository $usersRepository
+        UsersRepository $usersRepository,
+        RefreshTokenGeneratorInterface $refreshTokenGenerator,
+        RefreshTokenManagerInterface $refreshTokenManager
     ): Response {
         $serializer = SerializerBuilder::create()->build();
         $userDto = $serializer->deserialize($request->getContent(), UserDto::class, 'json');
@@ -207,8 +216,11 @@ class ApiController extends AbstractController
         } catch (\Exception $exception) {
             return $this->json(['trow' => 500, 'code' => 'Error occurred while trying register.', $exception]);
         }
+        $refreshToken = $refreshTokenGenerator->createForUserWithTtl($user, (new \DateTime())->modify('+1 month')->getTimestamp());
+        $refreshTokenManager->save($refreshToken);
+
         $token = $JWTTokenManager->create($user);
-        return $this->json(['token' => $token, 'roles' => $user->getRoles()], Response::HTTP_CREATED);
+        return $this->json(['token' => $token, 'roles' => $user->getRoles(), 'refreshToken' => $refreshToken->getRefreshToken()], Response::HTTP_CREATED);
     }
 
     /**
