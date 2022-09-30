@@ -2,6 +2,7 @@
 
 namespace App\Entity;
 
+use App\DTO\CourseDto;
 use App\Repository\CourseRepository;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
@@ -29,6 +30,11 @@ class Course
         2 => 'free',
         3 => 'buy'
     ];
+    private const TYPE_COURSE_REVERSE = [
+        'rent' => 1,
+        'free' => 2,
+        'buy' => 3
+    ];
     /**
      * @ORM\Column(type="smallint")
      */
@@ -43,6 +49,11 @@ class Course
      * @ORM\OneToMany(targetEntity=Transaction::class, mappedBy="course")
      */
     private $transactions;
+
+    /**
+     * @ORM\Column(type="string", length=255)
+     */
+    private $title;
 
     public function __construct()
     {
@@ -66,7 +77,7 @@ class Course
         return $this;
     }
 
-    public function getType(): ?int
+    public function getType(): ?string
     {
         return self::TYPE_COURSE[$this->type];
     }
@@ -118,5 +129,25 @@ class Course
         }
 
         return $this;
+    }
+
+    public function getTitle(): ?string
+    {
+        return $this->title;
+    }
+
+    public function setTitle(string $title): self
+    {
+        $this->title = $title;
+
+        return $this;
+    }
+    public function updateFromDto($courseDto)
+    {
+        /** @var CourseDto $courseDto */
+        $this->setCode($courseDto->code)
+            ->setTitle($courseDto->title)
+            ->setPrice($courseDto->price)
+            ->setType(self::TYPE_COURSE_REVERSE[$courseDto->type]);
     }
 }

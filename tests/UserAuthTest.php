@@ -3,7 +3,11 @@
 namespace App\Tests;
 
 use App\DataFixtures\AppFixtures;
+use App\DataFixtures\UserFixtures;
+use Gesdinet\JWTRefreshTokenBundle\Generator\RefreshTokenGeneratorInterface;
+use Gesdinet\JWTRefreshTokenBundle\Model\RefreshTokenManagerInterface;
 use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
 
 class UserAuthTest extends AbstractTest
 {
@@ -13,12 +17,19 @@ class UserAuthTest extends AbstractTest
     protected function setUp(): void
     {
         parent::setUp();
-        $this->serializer = self::$kernel->getContainer()->get('jms_serializer');
+        $this->serializer = self::getContainer()->get('jms_serializer');
     }
 
     protected function getFixtures(): array
     {
-        return [AppFixtures::class];
+        //return [AppFixtures::class];
+        return [
+            new AppFixtures(
+                self::getContainer()->get(UserPasswordHasherInterface::class),
+                self::getContainer()->get(RefreshTokenGeneratorInterface::class),
+                self::getContainer()->get(RefreshTokenManagerInterface::class)
+            )
+        ];
     }
 
     /**
@@ -40,7 +51,6 @@ class UserAuthTest extends AbstractTest
             ['CONTENT_TYPE' => 'application/json'],
             $this->serializer->serialize($user, 'json')
         );
-
         $this->assertResponseOk();
 
         self::assertTrue($client->getResponse()->headers->contains(
@@ -49,6 +59,7 @@ class UserAuthTest extends AbstractTest
         ));
         $json = json_decode($client->getResponse()->getContent(), true);
         self::assertNotEmpty($json['token']);
+        self::assertNotEmpty($json['refresh_token']);
     }
 
     /**
@@ -115,6 +126,7 @@ class UserAuthTest extends AbstractTest
 
         $json = json_decode($client->getResponse()->getContent(), true);
         self::assertNotEmpty($json['token']);
+        self::assertNotEmpty($json['refresh_token']);
         self::assertNotEmpty($json['roles']);
 
         self::assertContains('ROLE_USER', $json['roles']);

@@ -19,12 +19,10 @@ class TransactionController extends AbstractController
     private TransactionRepository $transactionRepository;
     private SerializerInterface $serializer;
 
-    public function __construct
-    (
+    public function __construct(
         TransactionRepository $transactionRepository,
         SerializerInterface $serializer
-    )
-    {
+    ) {
         $this->transactionRepository = $transactionRepository;
         $this->serializer = $serializer;
     }
@@ -34,9 +32,9 @@ class TransactionController extends AbstractController
         'deposit' => 2
     ];
     /**
-     * @Route('/', name="app_transaction", methods={"GET"})
+     * @Route("/", name="app_transaction", methods={"GET"})
      */
-    public function index(Request $request): Response
+    public function index(Request $request): JsonResponse
     {
         $filters = [];
         $filters['type'] = $request->query->get('type') ? self::TYPE_OPERATION[$request->query->get('type')] : null;
@@ -46,7 +44,7 @@ class TransactionController extends AbstractController
         $transactions = $this->transactionRepository->findTransactionUserByFilters($this->getUser(), $filters);
         $transactionDto = TransactionResponseTransformer::fromObjects($transactions);
         $transactionResponse = $this->serializer->serialize($transactionDto, 'json');
-
+        //return new JsonResponse($transactionResponse, Response::HTTP_OK);
         $response = new JsonResponse();
         $response->setContent($transactionResponse);
         $response->setStatusCode(Response::HTTP_OK);

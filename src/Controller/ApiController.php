@@ -128,7 +128,7 @@ class ApiController extends AbstractController
      *          type="string"
      *        ),
      *        @OA\Property(
-     *          property = "refresh_token",
+     *          property="refresh_token",
      *          type="string"
      *        ),
      *        @OA\Property(

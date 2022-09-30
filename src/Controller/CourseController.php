@@ -2,16 +2,23 @@
 
 namespace App\Controller;
 
+use App\DTO\CourseCreationRequestDto;
 use App\DTO\PaymentDto;
 use App\Entity\Users;
 use App\Repository\CourseRepository;
 use App\Service\Payment;
+use App\Transformer\CourseCreationTransformer;
 use App\Transformer\CourseResponseTransformer;
+use Doctrine\ORM\EntityManagerInterface;
 use JMS\Serializer\SerializerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Annotation\Route;
+use Symfony\Component\HttpFoundation\Request;
+use Symfony\Component\HttpKernel\Exception\HttpException;
+use Nelmio\ApiDocBundle\Annotation\Model;
+use OpenApi\Annotations as OA;
 
 /**
  * @Route("api/v1/courses")
@@ -30,8 +37,15 @@ class CourseController extends AbstractController
         $this->serializer = $serializer;
         $this->payment = $payment;
     }
-
     /**
+     * @OA\Get(
+     *     tags={"Courses"},
+     *     path="/api/v1/courses/",
+     *     summary="Список курсов",
+     *     description="Список курсов",
+     *     operationId="courses.index",
+     * )
+     *
     * @Route("/", name="app_course", methods={"GET"})
     */
     public function index(): Response
@@ -45,6 +59,13 @@ class CourseController extends AbstractController
     }
 
     /**
+     * @OA\Get(
+     *     tags={"Courses"},
+     *     path="/api/v1/courses/{code}",
+     *     summary="Информация о курсе",
+     *     description="Информация о курсе",
+     *     operationId="courses.show",
+     * )
      * @Route("/{code}", name="app_course_show", methods={"GET"})
      */
     public function show(string $code): Response
@@ -67,16 +88,29 @@ class CourseController extends AbstractController
         return $response;
     }
     /**
+     * @OA\Get(
+     *     tags={"Courses"},
+     *     path="/api/v1/courses/{code}/pay",
+     *     summary="Оплата курса",
+     *     description="Оплата курсов",
+     *     operationId="courses.pay",
+     *     security={{"Bearer": {} }, },
+     * )
      * @Route("/{code}/pay", name="app_course_pay", methods={"POST"})
      */
     public function pay(string $code): Response
     {
         $course = $this->courseRepository->findOneBy(['code' => $code]);
         $response = new JsonResponse();
-      /*  $responseCode = '';
-        $responseData = [];*/
         if (!$course) {
-          /*  $responseData = [
+            return new JsonResponse(
+                [
+                    'success' => false,
+                    'message' => 'Курс не найден',
+                ],
+                Response::HTTP_NOT_FOUND
+            );
+         /*   $responseData = [
                 'code' => Response::HTTP_NOT_FOUND,
                 'message' => 'Курс не найден',
             ];*/
@@ -87,7 +121,7 @@ class CourseController extends AbstractController
         try {
             $transaction = $this->payment->payment($user, $course);
         } catch (\Exception $exception) {
-            throw new \HttpException($exception->getMessage(), $exception->getCode());
+            throw new HttpException($exception->getCode(), $exception->getMessage());
         }
         $expiresAt = $transaction->getExpiresAt();
         $paymentDto = new PaymentDto();
@@ -100,5 +134,178 @@ class CourseController extends AbstractController
         $response->setContent($responseData);
 
         return $response;
+    }
+    /**
+     *@Route("/new", name="app_course_new", methods={"POST"})
+     */
+    public function new(Request $request, EntityManagerInterface $manager)
+    {
+        try {
+            $courseCreationRequest = $this->serializer->deserialize(
+                $request->getContent(),
+                CourseCreationRequestDto::class,
+                'json'
+            );
+            $course = $this->courseRepository->findOneBy(['code' => $courseCreationRequest->code]);
+            if ($course) {
+                return new JsonResponse(
+                    [
+                        'success' => false,
+                        'message' => 'Курс с таким кодом существует'
+                    ],
+                    Response::HTTP_CONFLICT
+                );
+            }
+            $course = CourseCreationTransformer::transformtoObject($courseCreationRequest);
+            $manager->persist($course);
+            $manager->flush();
+            return new JsonResponse(
+                [
+                    'success' => true,
+                ],
+                Response::HTTP_CREATED
+            );
+        } catch (\Exception $exception) {
+            return new JsonResponse(
+                [
+                    'success' => false,
+                    'message' => 'Ошибка во время сохранения курса со стороны биллинга'
+                ],
+                Response::HTTP_BAD_REQUEST
+            );
+        }
+    }
+
+    /**
+     * @OA\Post(
+     *     tags={"Courses"},
+     *     path="/api/v1/courses/{code}/edit",
+     *     summary="Редактирование курса",
+     *     description="Редактирование курса",
+     *     operationId="courses.edit",
+     *     security={
+     *         { "Bearer":{} },
+     *     },
+     *     @OA\RequestBody(
+     *         required=true,
+     *         @Model(type=CourseCreationRequestDto::class)
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Курс успешно изменен",
+     *         @OA\MediaType(
+     *             mediaType="application/json",
+     *             @OA\Schema(
+     *                 @OA\Property(
+     *                     property="success",
+     *                     type="bool",
+     *                     example="true"
+     *                 ),
+     *             ),
+     *        )
+     *     ),
+     *     @OA\Response(
+     *         response=404,
+     *         description="Курс не найден",
+     *         @OA\MediaType(
+     *             mediaType="application/json",
+     *             @OA\Schema(
+     *                 @OA\Property(
+     *                     property="success",
+     *                     type="bool",
+     *                     example="false"
+     *                 ),
+     *                 @OA\Property(
+     *                     property="message",
+     *                     type="string",
+     *                     example="Курс с таким кодом не найден"
+     *                 ),
+     *             ),
+     *        )
+     *     ),
+     *     @OA\Response(
+     *         response=400,
+     *         description="Ошибка во время изменения курса",
+     *         @OA\MediaType(
+     *             mediaType="application/json",
+     *             @OA\Schema(
+     *                 @OA\Property(
+     *                     property="success",
+     *                     type="bool",
+     *                     example="false"
+     *                 ),
+     *                 @OA\Property(
+     *                     property="message",
+     *                     type="string",
+     *                     example="Ошибка во время изменения курса"
+     *                 ),
+     *             ),
+     *        )
+     *     ),
+     *     @OA\Response(
+     *         response=409,
+     *         description="Курс с таким кодом уже существует",
+     *         @OA\MediaType(
+     *             mediaType="application/json",
+     *             @OA\Schema(
+     *                 @OA\Property(
+     *                     property="success",
+     *                     type="bool",
+     *                     example="false"
+     *                 ),
+     *                 @OA\Property(
+     *                     property="message",
+     *                     type="string",
+     *                     example="Курс с таким кодом уже существует"
+     *                 ),
+     *             ),
+     *        )
+     *     ),
+     * )
+     * @Route("/{code}/edit", name="app_course_edit", methods={"POST"})
+     */
+    public function edit(string $code, Request $request, EntityManagerInterface $manager): JsonResponse
+    {
+        try {
+            $course = $this->courseRepository->findOneBy(['code' => $code]);
+            if (!$course) {
+                return new JsonResponse(
+                    [
+                        'success' => false,
+                        'message' => 'Курс с таким кодом не найден'
+                    ],
+                    Response::HTTP_NOT_FOUND
+                );
+            }
+            /** @var CourseCreationRequestDto $courseEditRequest */
+            $courseEditRequest = $this->serializer->deserialize($request->getContent(), CourseCreationRequestDto::class, 'json');
+            $courseNewCode = $this->courseRepository->findOneBy(['code' => $courseEditRequest->code]);
+            if ($courseEditRequest->code !== $code && $courseNewCode) {
+                return new JsonResponse(
+                    [
+                        'success' => false,
+                        'message' => 'Курс с таким кодом уже существует'
+                    ],
+                    Response::HTTP_CONFLICT
+                );
+            }
+            $course->updateFromDto($courseEditRequest);
+            $manager->flush();
+
+            return new JsonResponse(
+                [
+                    'success' => true,
+                ],
+                Response::HTTP_OK
+            );
+        } catch (\Exception $exception) {
+            return new JsonResponse(
+                [
+                    'success' => false,
+                    'message' => 'Ошибка во время сохранения курса на биллинга'
+                ],
+                Response::HTTP_BAD_REQUEST
+            );
+        }
     }
 }

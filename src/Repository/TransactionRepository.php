@@ -67,29 +67,28 @@ class TransactionRepository extends ServiceEntityRepository
         }
         return $query->getQuery()->getResult();
     }
+    public function findRecentlyExpiredTransactions($user)
+    {
+        return $this->createQueryBuilder('t')
+            ->andWhere('t.customer = :userId')
+            ->andWhere('t.type = 1')
+            ->andWhere('t.expiresAt >= :today AND DATE_DIFF(t.expiresAt, :today) <= 1')
+            ->setParameter('today', new \DateTimeImmutable())
+            ->setParameter('userId', $user->getId())
+            ->getQuery()
+            ->getResult();
+    }
+    public function getPayStatisticPerMonth()
+    {
+        $dql = "
+            SELECT c.title, 
+                   (CASE WHEN c.type = 1 THEN 'Аренда' ELSE 'Покупка' END) as course_type, 
+                   COUNT(t.id) as transaction_count, 
+                   SUM(t.amount) as total_amount
+            FROM App\\Entity\\Transaction t JOIN App\\Entity\\Course c WITH t.course = c.id
+            WHERE t.type = 1 AND t.createdAt BETWEEN DATE_SUB(CURRENT_DATE(), 1, 'MONTH') AND CURRENT_DATE()
+            GROUP BY c.title, c.type";
 
-//    /**
-//     * @return Transaction[] Returns an array of Transaction objects
-//     */
-//    public function findByExampleField($value): array
-//    {
-//        return $this->createQueryBuilder('t')
-//            ->andWhere('t.exampleField = :val')
-//            ->setParameter('val', $value)
-//            ->orderBy('t.id', 'ASC')
-//            ->setMaxResults(10)
-//            ->getQuery()
-//            ->getResult()
-//        ;
-//    }
-
-//    public function findOneBySomeField($value): ?Transaction
-//    {
-//        return $this->createQueryBuilder('t')
-//            ->andWhere('t.exampleField = :val')
-//            ->setParameter('val', $value)
-//            ->getQuery()
-//            ->getOneOrNullResult()
-//        ;
-//    }
+        return $this->_em->createQuery($dql)->getResult();
+    }
 }

@@ -16,7 +16,12 @@ class TransactionResponseTransformer
             $dto->id = $transaction->getId();
             $dto->createdAt = $transaction->getCreatedAt();
             $dto->type = $transaction->getType();
-            $dto->courseCode = $transaction->getCourse()->getCode() ?: null;
+            if ($transaction->getCourse() === null) {
+                $dto->courseCode = null;
+            } else {
+                $dto->courseCode = $transaction->getCourse()->getCode();
+            }
+            //$dto->courseCode = $transaction->getCourse()->getCode() ?: null;
             $dto->amount = $transaction->getAmount();
             $dto->expiresAt = $transaction->getExpiresAt();
             $transactionsDto[] = $dto;

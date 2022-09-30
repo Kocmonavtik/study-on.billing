@@ -5,6 +5,7 @@ namespace App\DataFixtures;
 use App\Entity\Course;
 use App\Entity\Transaction;
 use Doctrine\Bundle\FixturesBundle\Fixture;
+use Doctrine\Common\DataFixtures\OrderedFixtureInterface;
 use Doctrine\Persistence\ObjectManager;
 use App\Entity\Users;
 use Gesdinet\JWTRefreshTokenBundle\Generator\RefreshTokenGeneratorInterface;
@@ -38,9 +39,9 @@ class AppFixtures extends Fixture
             $user1,
             '12345'
         ));
-        $user1->setBalace(100);
+        $user1->setBalace(16000);
         $manager->persist($user1);
-        $refreshToken = $this->refreshTokenGenerator->createForUserWithTtl($user1, (new \DateTime())->modify('+1 mouth')->getTimestamp());
+        $refreshToken = $this->refreshTokenGenerator->createForUserWithTtl($user1, (new \DateTime())->modify('+1 month')->getTimestamp());
         $this->refreshTokenManager->save($refreshToken);
 
         $user2 = new Users();
@@ -52,21 +53,24 @@ class AppFixtures extends Fixture
         ));
         $user2->setBalace(0);
         $manager->persist($user2);
-        $refreshToken = $this->refreshTokenGenerator->createForUserWithTtl($user1, (new \DateTime())->modify('+1 mouth')->getTimestamp());
+        $refreshToken = $this->refreshTokenGenerator->createForUserWithTtl($user2, (new \DateTime())->modify('+1 month')->getTimestamp());
         $this->refreshTokenManager->save($refreshToken);
 
         $course1 = new Course();
         $course1->setCode('0000')
             ->setType(1)
-            ->setPrice(1500);
+            ->setPrice(1500)
+            ->setTitle('Программирование на С#');
         $course2 = new Course();
         $course2->setType(3)
             ->setCode('0001')
-            ->setPrice(15000);
+            ->setPrice(15000)
+            ->setTitle('Java-разработчик');
         $course3 = new Course();
         $course3->setCode('0002')
             ->setType(2)
-            ->setPrice(1000);
+            ->setPrice(1000)
+            ->setTitle('Frontend-разработчик');
         $manager->persist($course1);
         $manager->persist($course2);
         $manager->persist($course3);

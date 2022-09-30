@@ -16,6 +16,7 @@ class CourseResponseTransformer
             $dto->code = $course->getCode();
             $dto->type = $course->getType();
             $dto->price = $course->getPrice();
+            $dto->title = $course->getTitle();
             $coursesDto[] = $dto;
         }
         return $coursesDto;
@@ -26,6 +27,7 @@ class CourseResponseTransformer
         $dto->code = $course->getCode();
         $dto->type = $course->getType();
         $dto->price = $course->getPrice();
+        $dto->title = $course->getTitle();
         return $dto;
     }
 }

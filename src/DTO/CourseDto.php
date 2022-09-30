@@ -21,4 +21,9 @@ class CourseDto
      */
     public float $price;
 
+    /**
+     * @JMSSerializer\Type("string")
+     */
+    public string $title;
+
 }

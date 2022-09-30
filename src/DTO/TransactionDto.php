@@ -37,6 +37,4 @@ class TransactionDto
      * @Serializer\SkipWhenEmpty
      */
     public ?\DateTimeImmutable $expiresAt;
-
-
 }

@@ -87,7 +87,7 @@ class Transaction
         return $this;
     }
 
-    public function getType(): ?int
+    public function getType(): ?string
     {
         return self::TYPE_OPERATION[$this->type];
     }

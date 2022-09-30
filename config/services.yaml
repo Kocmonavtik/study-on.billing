@@ -30,3 +30,11 @@ services:
 
     App\Service\Payment:
         public: true
+
+    App\Events\FixSchema:
+        tags:
+            - { name: doctrine.event_listener, event: postGenerateSchema }
+    App\Command\PaymentEndingNotificationCommand: ~
+        # tags: [console.command]
+    App\Command\PaymentReportCommand: ~
+        # tags: [console.command]

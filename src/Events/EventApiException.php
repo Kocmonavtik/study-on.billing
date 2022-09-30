@@ -14,11 +14,11 @@ class EventApiException implements EventSubscriberInterface
     {
         $e = $event->getThrowable();
 
-        $statusCode = $e instanceof HttpExceptionInterface ? 406 : Response::HTTP_INTERNAL_SERVER_ERROR;
+        $statusCode = $e instanceof HttpExceptionInterface ? $e->getStatusCode() : Response::HTTP_INTERNAL_SERVER_ERROR;
 
         $data = [
             'status_code' => $statusCode,
-            'message' => $e->getMessage(),
+            'message' => $e->getMessage()
         ];
 
         $event->setResponse(new JsonResponse($data, $statusCode));
